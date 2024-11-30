@@ -48,5 +48,13 @@ public static class CustomerEndpoints
             await connection.ExecuteAsync(sql, customer);
             return Results.NoContent();
         });
+
+        group.MapDelete("{id}", async (int id, SqlConnectionFactory sqlConnectionFactory) =>
+        {
+            using var connection = sqlConnectionFactory.Create();
+            const string sql = "DELETE FROM Customers WHERE Id = @Id";
+            await connection.ExecuteAsync(sql, new { Id = id });
+            return Results.NoContent();
+        });
     }
 }

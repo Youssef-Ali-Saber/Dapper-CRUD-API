@@ -23,5 +23,15 @@ public static class CustomerEndpoints
             var customer = await connection.QuerySingleOrDefaultAsync<Customer>(sql, new { Id = id });
             return customer is not null ? Results.Ok(customer) : Results.NotFound();
         });
+
+        app.MapPost("customers", async (Customer customer, SqlConnectionFactory sqlConnectionFactory) =>
+        {
+            using var connection = sqlConnectionFactory.Create();
+            const string sql = @"
+                INSERT INTO Customers (Id, FirstName, LastName, Email, DateOfBirth)
+                VALUES (@Id, @FirstName, @LastName, @Email, @DateOfBirth);";
+            await connection.ExecuteAsync(sql, customer);
+            return Results.Created();
+        });
     }
 }

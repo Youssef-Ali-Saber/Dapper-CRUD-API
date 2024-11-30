@@ -8,7 +8,10 @@ public static class CustomerEndpoints
 {
     public static void MapCustomerEndpoints(this WebApplication app)
     {
-        app.MapGet("customers", async (SqlConnectionFactory sqlConnectionFactory) =>
+        var group = app.MapGroup("api/customers")
+            .WithTags("Customers");
+
+        group.MapGet("", async (SqlConnectionFactory sqlConnectionFactory) =>
         {
             using var connection = sqlConnectionFactory.Create();
             const string sql = "SELECT * FROM Customers";
@@ -16,7 +19,7 @@ public static class CustomerEndpoints
             return Results.Ok(customers);
         });
 
-        app.MapGet("customers/{id}", async (int id, SqlConnectionFactory sqlConnectionFactory) =>
+        group.MapGet("{id}", async (int id, SqlConnectionFactory sqlConnectionFactory) =>
         {
             using var connection = sqlConnectionFactory.Create();
             const string sql = "SELECT * FROM Customers WHERE Id = @Id";
@@ -24,7 +27,7 @@ public static class CustomerEndpoints
             return customer is not null ? Results.Ok(customer) : Results.NotFound();
         });
 
-        app.MapPost("customers", async (Customer customer, SqlConnectionFactory sqlConnectionFactory) =>
+        group.MapPost("", async (Customer customer, SqlConnectionFactory sqlConnectionFactory) =>
         {
             using var connection = sqlConnectionFactory.Create();
             const string sql = @"
@@ -32,6 +35,18 @@ public static class CustomerEndpoints
                 VALUES (@Id, @FirstName, @LastName, @Email, @DateOfBirth);";
             await connection.ExecuteAsync(sql, customer);
             return Results.Created();
+        });
+
+        group.MapPut("{id}", async (int id, Customer customer, SqlConnectionFactory sqlConnectionFactory) =>
+        {
+            using var connection = sqlConnectionFactory.Create();
+            customer.Id = id;
+            const string sql = @"
+                UPDATE Customers
+                SET FirstName = @FirstName, LastName = @LastName, Email = @Email, DateOfBirth = @DateOfBirth
+                WHERE Id = @Id;";
+            await connection.ExecuteAsync(sql, customer);
+            return Results.NoContent();
         });
     }
 }
